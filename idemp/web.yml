@@ -1,0 +1,60 @@
+- hosts: web
+ 
+  vars_files:
+  - web_var.yml
+
+  tasks:
+  - name: "Create Directory for yum"
+    file: 
+      state: directory
+      path: "{{ file_path }}"
+      
+  - name: "Mount The directory"
+    mount:
+     src: "/dev/cdrom"
+     path: "{{ file_path }}"
+     state: mounted
+     fstype: "iso9660"
+
+  - name: "Yum for AppStream"
+    yum_repository:
+     name: "dvd1"
+     baseurl: "{{ file_path }}/AppStream"
+     description: "Yum for AppStream"
+     gpgcheck: no
+
+  - name: "Yum for BaseOs"
+    yum_repository:
+     name: "dvd2"
+     baseurl: "{{ file_path }}/BaseOS"
+     description: "Yum for BaseOS"
+     gpgcheck: no
+
+  - name: "install httpd"
+    package:
+     name: "httpd"
+     state: present  
+
+  - name: "create html file"
+    copy:
+     dest: "{{ doc_root }}/index.html"  
+     src: "index.html"
+
+  - name: "Change doc root"
+    template:
+     dest: "/etc/httpd/conf.d/lw.conf"
+     src: "/root/idemp/lw.conf"
+    notify: "Start service"
+
+  handlers:
+    - name: "Start service" 
+      service:
+       name: "httpd"
+       state: restarted
+
+    - name: "permit Firewall"
+      firewalld:
+       port: "80/tcp"
+       state: enabled
+       permanent: yes
+       immediate: yes

@@ -1,0 +1,5 @@
+file_path: "/yumreposlist"
+doc_root: "/var/www/html"
+httpd_port: "8081"
+
+
